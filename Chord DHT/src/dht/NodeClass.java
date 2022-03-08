@@ -46,6 +46,7 @@ public class NodeClass<E> extends UnicastRemoteObject implements NodeStruct<E>, 
 		System.out.println("Current Node List: " + getAllNodesName());
 		
 		try {
+			System.setProperty("java.rmi.server.hostname","192.168.200.6");
 			registry = LocateRegistry.createRegistry(DEFAULT_PORT);
 		} catch (Exception e) {
 			registry = LocateRegistry.getRegistry(DEFAULT_PORT);
