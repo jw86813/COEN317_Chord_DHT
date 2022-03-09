@@ -34,7 +34,7 @@ public class NodeClass<E> extends UnicastRemoteObject implements NodeStruct<E>, 
 	public static final int DEFAULT_PORT = 1099;
 	Registry registry;
 	
-	public NodeClass(String node_name) throws RemoteException {
+	public NodeClass(String node_name, String chord_ip) throws RemoteException {
 		
 		// set the first node
 		this.node_name = node_name;
@@ -46,17 +46,18 @@ public class NodeClass<E> extends UnicastRemoteObject implements NodeStruct<E>, 
 		System.out.println("Current Node List: " + getAllNodesName());
 		
 		try {
-			System.setProperty("java.rmi.server.hostname","192.168.200.6");
+			// set the property to the ip of first node, instead of getting 127.0.0.1
+			System.setProperty("java.rmi.server.hostname", chord_ip);
 			registry = LocateRegistry.createRegistry(DEFAULT_PORT);
 		} catch (Exception e) {
 			registry = LocateRegistry.getRegistry(DEFAULT_PORT);
 		}
 		registry.rebind(node_name, this);
 	}
-	
+		
 	@SuppressWarnings("unchecked")
 	public NodeClass(String name, String existed_name, String ip, int port) throws RemoteException, NotBoundException {
-		this(name);
+		this(name, ip);
 		registry = LocateRegistry.getRegistry(ip, port);
 		
 		// add new node from the existing node
@@ -69,7 +70,6 @@ public class NodeClass<E> extends UnicastRemoteObject implements NodeStruct<E>, 
 	public void join(NodeStruct<E> existed_node) {
 		try {
 			boolean joined = false;
-			
 			// find the right position by id, and insert the node to that position
 			while(!joined) {
 				NodeStruct<E> pred = existed_node.getPredecessor();
@@ -218,16 +218,6 @@ public class NodeClass<E> extends UnicastRemoteObject implements NodeStruct<E>, 
 			e.printStackTrace();
 		}
 	}
-
-//	@Override
-//	public void probe(String key, int count) throws RemoteException {
-//		if(this.node_id.equals(key) && count > 0) {
-//			System.out.println("Probe returned after " + count + " hops.");
-//		} else {
-//			System.out.println(node_name + ": Forwarding probe to " + successor);
-//			successor.probe(key, count+1);
-//		}
-//	}
 
 	// use key's id to seach which node stores this key-value pair
 	@Override
@@ -419,8 +409,8 @@ public class NodeClass<E> extends UnicastRemoteObject implements NodeStruct<E>, 
 		temp_ft.put(node_id, this);
 		try {
 			int my_index = nodes.indexOf(this);
-			for(int i=1; i<nodes.size(); i = i*2) {
-				int node_index = (my_index + i) % nodes.size();
+			for(int k=1; Math.pow(2, k)<=nodes.size(); k = k+1) {
+				int node_index = (my_index + 2^(k-1)) % nodes.size();
 				NodeStruct<E> n = nodes.get(node_index);
 				temp_ft.put(n.getID(), n);
 			}

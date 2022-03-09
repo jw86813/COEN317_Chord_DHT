@@ -1,6 +1,8 @@
 package dht;
 
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
@@ -11,10 +13,10 @@ public class Chord {
 	private KeyValueTable<String> new_node;
 	
 	// Create a node as a chord's first node
-	public Chord(String node_name) throws NotBoundException {
+	public Chord(String node_name, String chord_ip) throws NotBoundException {
 		try {
 			// for the first time, create three new nodes and join
-			new_node = new NodeClass<>(node_name);
+			new_node = new NodeClass<>(node_name, chord_ip);
 			System.out.println("Chord Create Success!");
 			
 			// Success. Listen to input to operate table
@@ -28,7 +30,7 @@ public class Chord {
 	public Chord(String node_name, String existed_node, String ip, int port) {
 		try {
 			new_node = new NodeClass<>(node_name, existed_node, ip, port);
-			
+
 			// Success. Listen to input to operate table
 			handle_msg();
 		} catch (RemoteException e) {
@@ -45,7 +47,6 @@ public class Chord {
 		System.out.println("Please enter command line (add/search/del/listAll/leave): ");
 		Scanner scan = new Scanner(System.in);
 		String input = scan.nextLine();
-		
 		while(!input.equals("leave")) {
 			// get actions
 			String[] cmd = input.split(" ");
@@ -55,27 +56,34 @@ public class Chord {
 					case "add":
 						String key = cmd[1];
 						String value = cmd[2];
-						new_node.create(key, value);
+						final Lock write = new ReentrantLock();
+						new Thread(){
+							public void run() {
+								new_node.create(key, value);
+								write.lock();
+								write.unlock();
+							}
+						}.start();
 						break;
 					case "search":
 						key = cmd[1];
-						new_node.search(key);
+						new Thread() {
+							public void run() {					
+								new_node.search(key);
+							}
+						}.start();
 						break;
 					case "del":
 						key = cmd[1];
-						new_node.delete(key);
+						new Thread() {
+							public void run() {					
+								new_node.delete(key);
+							}
+						}.start();
 						break;
 					case "listAll":
 						new_node.listAllKeyValue();
 						break;
-						
-//					case "bench":
-//						Benchmark.bench(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]));
-//						break;
-//					case "benchc":
-//						Benchmark.benchConcurrency(Integer.parseInt(cmd[1]));
-//						break;
-					
 					default:
 						System.out.println("Please enter command line (add/search/del/listAll/leave): ");
 				}
@@ -92,9 +100,10 @@ public class Chord {
 	
 	public static void main(String[] args) throws NotBoundException {
 		// get command-line "Java Chord [node_name]"
-		if(args.length == 1) {
+		if(args.length == 2) {
 			String dht_name = args[0];
-			new Chord(dht_name);
+			String chord_ip = args[1];
+			new Chord(dht_name, chord_ip);
 		}
 		// get command-line "Java Chord [new_node_name, existed_node_name, chord_ip, port]"
 		else if(args.length == 4) {
