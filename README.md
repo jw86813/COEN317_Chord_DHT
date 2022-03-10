@@ -1,8 +1,8 @@
 # Distributed Hash Table using Chord Protocol
 ## Date - `03/09/2022`
-Jaidev Mirchandani (jmirchandani@scu.edu, W1610360)
-Hsuan Wang (hwang8@scu.edu, W1607849)
-Tony Mathen (tmathen@scu.edu, W1629791)
+Jaidev Mirchandani (jmirchandani@scu.edu, W1610360). 
+Hsuan Wang (hwang8@scu.edu, W1607849). 
+Tony Mathen (tmathen@scu.edu, W1629791). 
 ## Description 
 `We have implemented a highly availbale and scalable distributed hash table using Chord protocol and implemented schemes for increased performance, replication and cosistancy. `
 ## Usage
